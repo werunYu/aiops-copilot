@@ -1,0 +1,2 @@
+### 数据库 Postgres
+> docker run -d --name mysql97 -e MYSQL_ROOT_PASSWORD=root123456 -e MYSQL_DATABASE=aiops -e MYSQL_USER=werun -e MYSQL_PASSWORD=werun -p 3306:3306 -v mysql97_data:/var/lib/mysql --restart unless-stopped mysql:9.7.1

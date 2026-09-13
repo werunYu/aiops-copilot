@@ -1,0 +1,40 @@
+server:
+  port: 10805
+  shutdown: graceful
+spring:
+  application:
+    name: aiops
+  # 配置数据库连接
+  datasource:
+    username: werun
+    password: werun
+    url: jdbc:mysql://localhost:3306/aiops?useUnicode=true&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 2000
+      maximum-pool-size: 5
+  flyway:
+    enabled: true
+    callback-locations:
+      - classpath:db/migration
+    baseline-on-migrate: false
+    encoding: UTF-8
+    clean-disabled: true
+  # 配置模型
+  ai:
+    openai:
+      chat:
+        model: qwen3.8-max
+        temperature: 0.7
+        max-tokens: 2000
+        top-p: 0.9
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: sk-ws-H.EPLHPDP.wpOn.MEUCIE9b2qang634k27gcK63BldB3YKzoY47cPsZLLx3BZtfAiEAlmuoa8f-VxDzYluRF-vIhsbRWf_DA3M-8zankCRPHWM
+management:
+  endpoints:
+    web:
+      exposure:
+        # 通过HTTP对外暴露端点
+        include:
+          - health
+          - refresh
