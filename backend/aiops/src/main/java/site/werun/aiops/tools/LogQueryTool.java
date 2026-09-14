@@ -1,0 +1,37 @@
+package site.werun.aiops.tools;
+
+import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.stereotype.Component;
+import site.werun.aiops.dto.LogEntry;
+import site.werun.aiops.service.OrderServiceMockData;
+
+import java.util.List;
+
+/**
+ * @author werun
+ * @version 1.0
+ * @date 2026/09/13 19:17
+ * @description 日志查询Tool
+ **/
+@Component
+public class LogQueryTool {
+
+    private final OrderServiceMockData mockData;
+
+    public LogQueryTool(OrderServiceMockData mockData) {
+        this.mockData = mockData;
+    }
+
+    @Tool(
+            name = "query_recent_error_logs",
+            description = "查询服务近期错误日志。当监控指标异常、需要确认超时、连接池、数据库或异常堆栈证据时调用。"
+    )
+    public List<LogEntry> queryRecentErrorLogs(
+            @ToolParam(description = "服务名称，例如 order-service")
+            String serviceName,
+            @ToolParam(description = "可选日志关键词，例如 HikariPool 或 timeout", required = false)
+            String keyword) {
+        return mockData.errorLogs(serviceName, keyword);
+    }
+}

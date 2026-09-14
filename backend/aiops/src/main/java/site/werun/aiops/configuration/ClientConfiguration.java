@@ -7,7 +7,6 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import site.werun.aiops.prompt.SystemPrompt;
 
 /**
  * @author werun
@@ -30,8 +29,7 @@ public class ClientConfiguration {
     public ChatClient chatClient(OpenAiChatModel openAiChatModel) {
         return ChatClient
                 .builder(openAiChatModel)
-                .defaultSystem(SystemPrompt.SYSTEM_PROMPT)
-                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory()).build())
+//                .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory()).build())
                 .build();
     }
 }
