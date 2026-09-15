@@ -1,10 +1,13 @@
 package site.werun.aiops.tools;
 
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 import site.werun.aiops.dto.LogEntry;
+import site.werun.aiops.service.AgentEventService;
 import site.werun.aiops.service.OrderServiceMockData;
+import site.werun.aiops.utils.JsonUtils;
 
 import java.util.List;
 
@@ -19,8 +22,11 @@ public class LogQueryTool {
 
     private final OrderServiceMockData mockData;
 
-    public LogQueryTool(OrderServiceMockData mockData) {
+    private final AgentEventService agentEventService;
+
+    public LogQueryTool(OrderServiceMockData mockData, AgentEventService agentEventService) {
         this.mockData = mockData;
+        this.agentEventService = agentEventService;
     }
 
     @Tool(
@@ -31,7 +37,22 @@ public class LogQueryTool {
             @ToolParam(description = "服务名称，例如 order-service")
             String serviceName,
             @ToolParam(description = "可选日志关键词，例如 HikariPool 或 timeout", required = false)
-            String keyword) {
-        return mockData.errorLogs(serviceName, keyword);
+            String keyword,
+            ToolContext toolContext) {
+
+        Long incidentId = ((Number) toolContext.getContext()
+                .get("incidentId"))
+                .longValue();
+
+        List<LogEntry> logList = mockData.errorLogs(serviceName, keyword);
+        agentEventService.save(
+                incidentId,
+                "TOOL_CALLED",
+                "query_recent_error_logs",
+                JsonUtils.toJson(logList),
+                "SUCCESS"
+        );
+
+        return logList;
     }
 }

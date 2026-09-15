@@ -30,4 +30,8 @@ public record Incident(
     public static Incident of(String serviceName, String environment, String title, String rawAlert, String status) {
         return new Incident(null, serviceName, environment, title, rawAlert, status, LocalDateTime.now(), LocalDateTime.now());
     }
+
+    public Incident withStatus(String newStatus) {
+        return new Incident(id, serviceName, environment, title, rawAlert, newStatus, createdAt, LocalDateTime.now());
+    }
 }

@@ -11,10 +11,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import site.werun.aiops.domain.AgentEvent;
 import site.werun.aiops.domain.Incident;
+import site.werun.aiops.domain.RcaReport;
 import site.werun.aiops.dto.RcaAnalyzeReport;
+import site.werun.aiops.service.AgentEventService;
 import site.werun.aiops.service.IncidentAnalysisService;
 import site.werun.aiops.service.IncidentService;
+import site.werun.aiops.service.RcaReportService;
+
+import java.util.List;
 
 /**
  * @author werun
@@ -30,11 +36,19 @@ public class IncidentController {
 
     private final IncidentAnalysisService incidentAnalysisService;
 
+    private final RcaReportService rcaReportService;
+
+    private final AgentEventService agentEventService;
+
     public IncidentController(
                               IncidentService incidentService,
-                              IncidentAnalysisService incidentAnalysisService) {
+                              IncidentAnalysisService incidentAnalysisService,
+                              RcaReportService rcaReportService,
+                              AgentEventService agentEventService) {
         this.incidentService = incidentService;
         this.incidentAnalysisService = incidentAnalysisService;
+        this.rcaReportService = rcaReportService;
+        this.agentEventService = agentEventService;
     }
 
     /**
@@ -78,6 +92,26 @@ public class IncidentController {
     @PostMapping("/{id}/analyze")
     public RcaAnalyzeReport analyze(@PathVariable("id") Long id) {
         return  incidentAnalysisService.analyze(id);
+    }
+
+    /**
+     * 查询事件分析根因报告.
+     * @param id 事件id.
+     * @return 根因分析报告
+     */
+    @GetMapping("/{id}/report")
+    public RcaReport report(@PathVariable("id") Long id) {
+        return rcaReportService.findById(id);
+    }
+
+    /**
+     * 查询事件根因分析工具调用记录.
+     * @param id 事件id.
+     * @return 工具调用记录列表
+     */
+    @GetMapping("/{id}/events")
+    public List<AgentEvent> events(@PathVariable("id") Long id) {
+        return agentEventService.findEventByIncidentId(id);
     }
 
 }

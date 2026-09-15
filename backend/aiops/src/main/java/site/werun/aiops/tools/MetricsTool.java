@@ -1,10 +1,13 @@
 package site.werun.aiops.tools;
 
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 import site.werun.aiops.dto.ServiceMetrics;
+import site.werun.aiops.service.AgentEventService;
 import site.werun.aiops.service.OrderServiceMockData;
+import site.werun.aiops.utils.JsonUtils;
 
 /**
  * @author werun
@@ -17,8 +20,11 @@ public class MetricsTool {
 
     private final OrderServiceMockData mockData;
 
-    public MetricsTool(OrderServiceMockData mockData) {
+    private final AgentEventService agentEventService;
+
+    public MetricsTool(OrderServiceMockData mockData, AgentEventService agentEventService) {
         this.mockData = mockData;
+        this.agentEventService = agentEventService;
     }
 
     @Tool(
@@ -27,7 +33,23 @@ public class MetricsTool {
     )
     public ServiceMetrics queryServiceMetrics(
             @ToolParam(description = "服务名称，例如 order-service")
-            String serviceName) {
-        return mockData.metrics(serviceName);
+            String serviceName,
+            ToolContext toolContext) {
+
+        Long incidentId = ((Number) toolContext.getContext()
+                .get("incidentId"))
+                .longValue();
+
+        ServiceMetrics result = mockData.metrics(serviceName);
+
+        agentEventService.save(
+                incidentId,
+                "TOOL_CALLED",
+                "query_service_metrics",
+                JsonUtils.toJson(result),
+                "SUCCESS"
+        );
+
+        return result;
     }
 }

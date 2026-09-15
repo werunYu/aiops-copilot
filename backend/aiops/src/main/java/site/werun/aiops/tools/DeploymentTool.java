@@ -1,10 +1,13 @@
 package site.werun.aiops.tools;
 
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 import site.werun.aiops.dto.DeploymentRecord;
+import site.werun.aiops.service.AgentEventService;
 import site.werun.aiops.service.OrderServiceMockData;
+import site.werun.aiops.utils.JsonUtils;
 
 import java.util.List;
 
@@ -19,8 +22,11 @@ public class DeploymentTool {
 
     private final OrderServiceMockData mockData;
 
-    public DeploymentTool(OrderServiceMockData mockData) {
+    private final AgentEventService agentEventService;
+
+    public DeploymentTool(OrderServiceMockData mockData, AgentEventService agentEventService) {
         this.mockData = mockData;
+        this.agentEventService = agentEventService;
     }
 
     @Tool(
@@ -29,7 +35,23 @@ public class DeploymentTool {
     )
     public List<DeploymentRecord> queryRecentDeployments(
             @ToolParam(description = "服务名称，例如 order-service")
-            String serviceName) {
-        return mockData.deployments(serviceName);
+            String serviceName,
+            ToolContext toolContext) {
+
+        Long incidentId = ((Number) toolContext.getContext()
+                .get("incidentId"))
+                .longValue();
+
+        List<DeploymentRecord> deployments = mockData.deployments(serviceName);
+
+        agentEventService.save(
+                incidentId,
+                "TOOL_CALLED",
+                "query_recent_deployments",
+                JsonUtils.toJson(deployments),
+                "SUCCESS"
+        );
+
+        return deployments;
     }
 }

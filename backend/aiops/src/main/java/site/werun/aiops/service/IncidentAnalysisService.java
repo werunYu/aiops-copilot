@@ -1,13 +1,21 @@
 package site.werun.aiops.service;
 
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import site.werun.aiops.domain.Incident;
 import site.werun.aiops.dto.RcaAnalyzeReport;
+import site.werun.aiops.enums.ErrorCodeEnum;
+import site.werun.aiops.enums.IncidentStatusEnum;
+import site.werun.aiops.exception.ServiceException;
 import site.werun.aiops.prompt.SystemPrompt;
 import site.werun.aiops.tools.DeploymentTool;
 import site.werun.aiops.tools.LogQueryTool;
 import site.werun.aiops.tools.MetricsTool;
+
+import java.util.Map;
 
 /**
  * @author werun
@@ -15,6 +23,7 @@ import site.werun.aiops.tools.MetricsTool;
  * @date 2026/09/14 21:03
  * @description
  **/
+@Slf4j
 @Service
 public class IncidentAnalysisService {
 
@@ -28,12 +37,25 @@ public class IncidentAnalysisService {
 
     private final MetricsTool metricsTool;
 
-    public IncidentAnalysisService(ChatClient chatClient, IncidentService incidentService, DeploymentTool deploymentTool, LogQueryTool logQueryTool, MetricsTool metricsTool) {
+    private final RcaReportService rcaReportService;
+
+    private final String modelName;
+
+    public IncidentAnalysisService(
+            ChatClient chatClient,
+            IncidentService incidentService,
+            DeploymentTool deploymentTool,
+            LogQueryTool logQueryTool,
+            MetricsTool metricsTool,
+            RcaReportService rcaReportService,
+            @Value("${spring.ai.openai.chat.model}") String modelName) {
         this.chatClient = chatClient;
         this.incidentService = incidentService;
         this.deploymentTool = deploymentTool;
         this.logQueryTool = logQueryTool;
         this.metricsTool = metricsTool;
+        this.rcaReportService = rcaReportService;
+        this.modelName = modelName;
     }
 
     /**
@@ -51,13 +73,45 @@ public class IncidentAnalysisService {
      * @return 事件报告
      */
     public RcaAnalyzeReport analyze(Long id) {
+        // 更新事件状态为分析中.
+        incidentService.updateStatus(id, IncidentStatusEnum.ANALYZING.getStatus());
+
         Incident incident = incidentService.findById(id);
-        return chatClient.prompt()
-                .system(SystemPrompt.INCIDENT_ANALYSIS_PROMPT)
-                .user(buildAnalysisPrompt(incident))
-                .tools(metricsTool, logQueryTool, deploymentTool)
-                .call()
-                .entity(RcaAnalyzeReport.class);
+
+        long startTime = System.currentTimeMillis();
+
+        try {
+            // 调用模型、工具分析
+            RcaAnalyzeReport rcaAnalyzeReport = chatClient.prompt()
+                    .system(SystemPrompt.INCIDENT_ANALYSIS_PROMPT)
+                    .user(buildAnalysisPrompt(incident))
+                    .tools(metricsTool, logQueryTool, deploymentTool)
+                    .toolContext(Map.of("incidentId", id))
+                    .call()
+                    .entity(RcaAnalyzeReport.class);
+
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("模型分析耗时:{}", duration);
+
+            // 保存到rcaReport
+            rcaReportService.save(id, rcaAnalyzeReport, modelName, duration);
+
+            // 更新事件状态为分析完成
+            incidentService.updateStatus(id, IncidentStatusEnum.COMPLETED.getStatus());
+
+            return rcaAnalyzeReport;
+        } catch (Exception e) {
+            long duration = System.currentTimeMillis() - startTime;
+            log.error("Incident 分析失败，incidentId={}, duration={}ms", id, duration, e);
+
+            try {
+                incidentService.updateStatus(id, IncidentStatusEnum.FAILED.getStatus());
+            } catch (Exception statusException) {
+                log.error("Incident 分析失败后，无法更新 FAILED 状态，incidentId={}", id, statusException);
+            }
+
+            throw new ServiceException(ErrorCodeEnum.ERROR_CODE_MODEL_010001);
+        }
     }
 
     private String buildAnalysisPrompt(Incident incident) {

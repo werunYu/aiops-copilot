@@ -1,5 +1,6 @@
 package site.werun.aiops.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import java.util.Optional;
  * @date 2026/09/14 06:48
  * @description
  **/
+@Slf4j
 @Service
 public class IncidentService {
 
@@ -42,5 +44,15 @@ public class IncidentService {
         }
 
         return incident.get();
+    }
+
+    public Incident updateStatus(Long id, String newStatus) {
+        log.info("更新事件:{}状态为:{}", id, newStatus);
+        Incident incident = incidentRepository.findById(id)
+                .orElseThrow(() -> new IncidentNotFoundException(id));
+
+        Incident updated = incident.withStatus(newStatus);
+        // Spring Data JDBC 根据 id 非空判断执行 UPDATE
+        return incidentRepository.save(updated);
     }
 }
