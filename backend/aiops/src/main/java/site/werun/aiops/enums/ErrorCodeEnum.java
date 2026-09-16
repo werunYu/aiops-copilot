@@ -14,6 +14,7 @@ import lombok.Getter;
 public enum ErrorCodeEnum {
 
     ERROR_CODE_SYSTEM_000000("000000", "SUCCESS"),
+    ERROR_CODE_SYSTEM_000001("000001", "系统异常"),
 
     ERROR_CODE_MODEL_010001("010001", "模型分析失败");
 

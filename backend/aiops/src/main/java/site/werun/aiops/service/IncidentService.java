@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import site.werun.aiops.domain.Incident;
 import site.werun.aiops.domain.IncidentRepository;
 import site.werun.aiops.exception.IncidentNotFoundException;
+import site.werun.aiops.request.CreateIncidentRequest;
 
 import java.util.Optional;
 
@@ -28,7 +29,8 @@ public class IncidentService {
         this.incidentRepository = incidentRepository;
     }
 
-    public Incident save(Incident incident) {
+    public Incident save(CreateIncidentRequest request) {
+        Incident incident = Incident.of(request.getServiceName(), request.getEnvironment(), request.getTitle(), request.getRawAlert(), null);
         return incidentRepository.save(incident);
     }
 

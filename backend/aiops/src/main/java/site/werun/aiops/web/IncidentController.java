@@ -1,5 +1,6 @@
 package site.werun.aiops.web;
 
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
@@ -15,10 +16,14 @@ import site.werun.aiops.domain.AgentEvent;
 import site.werun.aiops.domain.Incident;
 import site.werun.aiops.domain.RcaReport;
 import site.werun.aiops.dto.RcaAnalyzeReport;
+import site.werun.aiops.request.CreateIncidentRequest;
+import site.werun.aiops.response.RcaReportResponse;
+import site.werun.aiops.response.Result;
 import site.werun.aiops.service.AgentEventService;
 import site.werun.aiops.service.IncidentAnalysisService;
 import site.werun.aiops.service.IncidentService;
 import site.werun.aiops.service.RcaReportService;
+import site.werun.aiops.utils.JsonUtils;
 
 import java.util.List;
 
@@ -53,13 +58,13 @@ public class IncidentController {
 
     /**
      * 提交事件.
-     * @param incident {@link Incident}
+     * @param request {@link CreateIncidentRequest}
      * @return 事件对象
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Incident post(@RequestBody Incident incident) {
-        return incidentService.save(incident);
+    public Result<Incident> post(@Valid @RequestBody CreateIncidentRequest request) {
+        return Result.success(incidentService.save(request));
     }
 
     /**
@@ -69,10 +74,10 @@ public class IncidentController {
      * @return 事件列表
      */
     @GetMapping
-    public PagedModel<Incident> get(@RequestParam("page") int page,
+    public Result<PagedModel<Incident>> get(@RequestParam("page") int page,
                                     @RequestParam("pageSize") int pageSize) {
         Page<Incident> result = incidentService.findAll(page, pageSize);
-        return new PagedModel<>(result);
+        return Result.success(new PagedModel<>(result));
     }
 
     /**
@@ -81,8 +86,8 @@ public class IncidentController {
      * @return 事件详情
      */
     @GetMapping("/{id}")
-    public Incident findById(@PathVariable("id") Long id) {
-        return incidentService.findById(id);
+    public Result<Incident> findById(@PathVariable("id") Long id) {
+        return Result.success(incidentService.findById(id));
     }
 
     /**
@@ -100,8 +105,16 @@ public class IncidentController {
      * @return 根因分析报告
      */
     @GetMapping("/{id}/report")
-    public RcaReport report(@PathVariable("id") Long id) {
-        return rcaReportService.findById(id);
+    public Result<RcaReportResponse> report(@PathVariable("id") Long id) {
+        RcaReportResponse response = new RcaReportResponse();
+        RcaReport rcaReport = rcaReportService.findById(id);
+        response.setIncidentId(rcaReport.incidentId());
+        response.setModelName(rcaReport.modelName());
+        response.setDurationMs(rcaReport.durationMs());
+        response.setCreatedAt(rcaReport.createdAt());
+        response.setReport(JsonUtils.convertValue(rcaReport.reportJson(), RcaAnalyzeReport.class));
+
+        return Result.success(response);
     }
 
     /**
@@ -110,8 +123,8 @@ public class IncidentController {
      * @return 工具调用记录列表
      */
     @GetMapping("/{id}/events")
-    public List<AgentEvent> events(@PathVariable("id") Long id) {
-        return agentEventService.findEventByIncidentId(id);
+    public Result<List<AgentEvent>> events(@PathVariable("id") Long id) {
+        return Result.success(agentEventService.findEventByIncidentId(id));
     }
 
 }
