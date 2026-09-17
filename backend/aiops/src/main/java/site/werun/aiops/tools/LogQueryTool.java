@@ -44,15 +44,13 @@ public class LogQueryTool {
                 .get("incidentId"))
                 .longValue();
 
-        List<LogEntry> logList = mockData.errorLogs(serviceName, keyword);
-        agentEventService.save(
-                incidentId,
-                "TOOL_CALLED",
-                "query_recent_error_logs",
-                JsonUtils.toJson(logList),
-                "SUCCESS"
-        );
-
-        return logList;
+        try {
+            List<LogEntry> logList = mockData.errorLogs(serviceName, keyword);
+            agentEventService.save(incidentId, "TOOL_CALLED", "query_recent_error_logs", JsonUtils.toJson(logList), "SUCCESS");
+            return logList;
+        } catch (RuntimeException exception) {
+            agentEventService.save(incidentId, "TOOL_FAILED", "query_recent_error_logs", "调用失败: " + exception.getMessage(), "FAILED");
+            throw exception;
+        }
     }
 }

@@ -96,6 +96,25 @@ public class JsonUtils {
     }
 
     /**
+     * 读取数据库 JSON 字段。部分 JDBC 驱动会将 JSON 列返回为 JSON 字符串，
+     * 因此需要先解开外层字符串，再反序列化实际对象。
+     */
+    public static <T> T fromStoredJson(String json, Class<T> clazz) {
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode node = MAPPER.readTree(json);
+            while (node.isTextual()) {
+                node = MAPPER.readTree(node.textValue());
+            }
+            return MAPPER.treeToValue(node, clazz);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("数据库 JSON 数据无法转换为 " + clazz.getSimpleName(), e);
+        }
+    }
+
+    /**
      * JSON 字符串转复杂泛型对象，例如 List<User>、Map<String, Object>
      * 用法: JsonUtils.fromJson(json, new TypeReference<List<User>>() {})
      */

@@ -88,7 +88,7 @@ Frontend tests cover API error display, event-to-timeline mapping, terminal-even
 
 ## Delivery
 
-Docker Compose defines MySQL, backend, and frontend services. The backend receives `API_KEY` only from its environment; no secrets are committed. `.env.example` documents required variables. The README documents prerequisite software, startup, fixed demo flow, endpoints, local knowledge extension, and limitations.
+Docker Compose defines MySQL, backend, and frontend services. The backend receives `API_KEY` only from its environment; no secrets are committed. `../../../.env` documents required variables. The README documents prerequisite software, startup, fixed demo flow, endpoints, local knowledge extension, and limitations.
 
 ## Acceptance Criteria
 

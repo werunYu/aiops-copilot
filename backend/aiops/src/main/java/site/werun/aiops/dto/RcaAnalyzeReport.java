@@ -1,5 +1,7 @@
 package site.werun.aiops.dto;
 
+import site.werun.aiops.knowledge.KnowledgeReference;
+
 import java.util.List;
 
 /**
@@ -14,5 +16,5 @@ public record RcaAnalyzeReport(
         List<PossibleRootCause> possibleRootCauses,
         List<Evidence> evidence,
         List<InvestigationStep> investigationSteps,
-        List<String> relatedKnowledge) {
+        List<KnowledgeReference> relatedKnowledge) {
 }

@@ -12,6 +12,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum IncidentStatusEnum {
+    PENDING("PENDING", "待分析"),
     ANALYZING("ANALYZING", "分析中"),
     COMPLETED("COMPLETED", "分析完成"),
     FAILED("FAILED", "分析失败");

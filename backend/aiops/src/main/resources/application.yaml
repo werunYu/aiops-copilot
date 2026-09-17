@@ -6,9 +6,9 @@ spring:
     name: aiops
   # 配置数据库连接
   datasource:
-    username: werun
-    password: werun
-    url: jdbc:mysql://localhost:3306/aiops?useUnicode=true&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:werun}
+    password: ${DB_PASSWORD:werun}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/aiops?useUnicode=true&serverTimezone=Asia/Shanghai}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       connection-timeout: 2000

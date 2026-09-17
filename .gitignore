@@ -9,6 +9,7 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -37,3 +38,8 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Local application files
+.env
+frontend/node_modules/
+frontend/dist/

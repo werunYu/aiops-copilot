@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,11 +20,13 @@ import site.werun.aiops.dto.RcaAnalyzeReport;
 import site.werun.aiops.request.CreateIncidentRequest;
 import site.werun.aiops.response.RcaReportResponse;
 import site.werun.aiops.response.Result;
+import site.werun.aiops.response.AnalysisTaskResponse;
 import site.werun.aiops.service.AgentEventService;
 import site.werun.aiops.service.IncidentAnalysisService;
 import site.werun.aiops.service.IncidentService;
 import site.werun.aiops.service.RcaReportService;
 import site.werun.aiops.utils.JsonUtils;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 
@@ -95,8 +98,9 @@ public class IncidentController {
      * @param id 事件id
      */
     @PostMapping("/{id}/analyze")
-    public RcaAnalyzeReport analyze(@PathVariable("id") Long id) {
-        return  incidentAnalysisService.analyze(id);
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public Result<AnalysisTaskResponse> analyze(@PathVariable("id") Long id) {
+        return Result.success(incidentAnalysisService.start(id));
     }
 
     /**
@@ -112,7 +116,7 @@ public class IncidentController {
         response.setModelName(rcaReport.modelName());
         response.setDurationMs(rcaReport.durationMs());
         response.setCreatedAt(rcaReport.createdAt());
-        response.setReport(JsonUtils.convertValue(rcaReport.reportJson(), RcaAnalyzeReport.class));
+        response.setReport(JsonUtils.fromStoredJson(rcaReport.reportJson(), RcaAnalyzeReport.class));
 
         return Result.success(response);
     }
@@ -125,6 +129,12 @@ public class IncidentController {
     @GetMapping("/{id}/events")
     public Result<List<AgentEvent>> events(@PathVariable("id") Long id) {
         return Result.success(agentEventService.findEventByIncidentId(id));
+    }
+
+    @GetMapping(value = "/{id}/events/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamEvents(@PathVariable("id") Long id) {
+        incidentService.findById(id);
+        return agentEventService.subscribe(id);
     }
 
 }

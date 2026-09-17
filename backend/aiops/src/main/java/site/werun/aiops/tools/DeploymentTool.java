@@ -42,16 +42,13 @@ public class DeploymentTool {
                 .get("incidentId"))
                 .longValue();
 
-        List<DeploymentRecord> deployments = mockData.deployments(serviceName);
-
-        agentEventService.save(
-                incidentId,
-                "TOOL_CALLED",
-                "query_recent_deployments",
-                JsonUtils.toJson(deployments),
-                "SUCCESS"
-        );
-
-        return deployments;
+        try {
+            List<DeploymentRecord> deployments = mockData.deployments(serviceName);
+            agentEventService.save(incidentId, "TOOL_CALLED", "query_recent_deployments", JsonUtils.toJson(deployments), "SUCCESS");
+            return deployments;
+        } catch (RuntimeException exception) {
+            agentEventService.save(incidentId, "TOOL_FAILED", "query_recent_deployments", "调用失败: " + exception.getMessage(), "FAILED");
+            throw exception;
+        }
     }
 }

@@ -40,16 +40,13 @@ public class MetricsTool {
                 .get("incidentId"))
                 .longValue();
 
-        ServiceMetrics result = mockData.metrics(serviceName);
-
-        agentEventService.save(
-                incidentId,
-                "TOOL_CALLED",
-                "query_service_metrics",
-                JsonUtils.toJson(result),
-                "SUCCESS"
-        );
-
-        return result;
+        try {
+            ServiceMetrics result = mockData.metrics(serviceName);
+            agentEventService.save(incidentId, "TOOL_CALLED", "query_service_metrics", JsonUtils.toJson(result), "SUCCESS");
+            return result;
+        } catch (RuntimeException exception) {
+            agentEventService.save(incidentId, "TOOL_FAILED", "query_service_metrics", "调用失败: " + exception.getMessage(), "FAILED");
+            throw exception;
+        }
     }
 }

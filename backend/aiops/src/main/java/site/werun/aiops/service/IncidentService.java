@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import site.werun.aiops.domain.Incident;
 import site.werun.aiops.domain.IncidentRepository;
+import site.werun.aiops.enums.IncidentStatusEnum;
 import site.werun.aiops.exception.IncidentNotFoundException;
 import site.werun.aiops.request.CreateIncidentRequest;
 
@@ -30,7 +31,13 @@ public class IncidentService {
     }
 
     public Incident save(CreateIncidentRequest request) {
-        Incident incident = Incident.of(request.getServiceName(), request.getEnvironment(), request.getTitle(), request.getRawAlert(), null);
+        Incident incident = Incident.of(
+                request.getServiceName(),
+                request.getEnvironment(),
+                request.getTitle(),
+                request.getRawAlert(),
+                IncidentStatusEnum.PENDING.getStatus()
+        );
         return incidentRepository.save(incident);
     }
 

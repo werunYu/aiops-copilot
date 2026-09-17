@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import site.werun.aiops.domain.AgentEvent;
 import site.werun.aiops.domain.AgentEventRepository;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,12 +21,19 @@ public class AgentEventService {
 
     private final AgentEventRepository agentEventRepository;
 
-    public AgentEventService(AgentEventRepository agentEventRepository) {
+    private final AgentEventPublisher agentEventPublisher;
+
+    public AgentEventService(AgentEventRepository agentEventRepository, AgentEventPublisher agentEventPublisher) {
         this.agentEventRepository = agentEventRepository;
+        this.agentEventPublisher = agentEventPublisher;
     }
 
     public List<AgentEvent> findEventByIncidentId(Long incidentId) {
         return agentEventRepository.findByIncidentIdOrderByCreatedAtAsc(incidentId);
+    }
+
+    public SseEmitter subscribe(Long incidentId) {
+        return agentEventPublisher.subscribe(incidentId, findEventByIncidentId(incidentId));
     }
 
     public AgentEvent save(
@@ -43,6 +51,8 @@ public class AgentEventService {
                 status,
                 LocalDateTime.now()
         );
-        return agentEventRepository.save(event);
+        AgentEvent savedEvent = agentEventRepository.save(event);
+        agentEventPublisher.publish(savedEvent);
+        return savedEvent;
     }
 }

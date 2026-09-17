@@ -1,0 +1,42 @@
+services:
+  mysql:
+    image: mysql:9.7.1
+    environment:
+      MYSQL_DATABASE: aiops
+      MYSQL_USER: werun
+      MYSQL_PASSWORD: werun
+      MYSQL_ROOT_PASSWORD: root123456
+    ports:
+      - "3306:3306"
+    volumes:
+      - aiops_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot123456"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend/aiops
+    environment:
+      API_KEY: ${API_KEY}
+      DB_URL: jdbc:mysql://mysql:3306/aiops?useUnicode=true&serverTimezone=Asia/Shanghai
+      DB_USERNAME: werun
+      DB_PASSWORD: werun
+    ports:
+      - "10805:10805"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  aiops_mysql_data:

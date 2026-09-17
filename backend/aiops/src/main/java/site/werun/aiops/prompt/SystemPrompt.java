@@ -47,7 +47,9 @@ public interface SystemPrompt {
                   "purpose": "该动作要验证什么"
                 }
               ],
-              "relatedKnowledge": []
+              "relatedKnowledge": [
+                {"title": "知识标题", "source": "knowledge/文件名.md", "excerpt": "相关知识摘要"}
+              ]
             }
             """;
 }
