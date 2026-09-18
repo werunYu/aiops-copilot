@@ -6,7 +6,8 @@ COPY src src
 RUN mvn -q -DskipTests package
 
 FROM eclipse-temurin:21.0.12_8-jre
+ENV TZ=Asia/Shanghai
 WORKDIR /app
 COPY --from=build /workspace/target/aiops.jar app.jar
 EXPOSE 10805
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Shanghai", "-jar", "/app/app.jar"]
